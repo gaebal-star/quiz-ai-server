@@ -1,1 +1,27 @@
+# Cache
+.cache/
+**/.cache/
+
+# React / Node
+node_modules/
+.npm/
+.eslintcache
+
+# Spring / Gradle
+.gradle/
+build/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+__pycache__/
+*.py[cod]
+
 .env
+.env
+**/.env
