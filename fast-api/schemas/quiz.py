@@ -12,7 +12,7 @@ class Quiz(BaseModel):
 
 class GeneratedQuiz(Quiz):
     # Python 내부에서만 사용. Java DTO로 보내지 않는다.
-    sourceChunkId: int = Field(gt=0)
+    sourceChunkId: int = Field(ge=1)
 
 class GeneratedQuizResponse(BaseModel):
     quizzes: list[GeneratedQuiz] = Field(min_length=1, max_length=10)

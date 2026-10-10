@@ -14,6 +14,13 @@ import os
 import pathlib
 from dotenv import load_dotenv
 
+
+# MAX_IMAGE_BYTES
+MAX_IMAGE_BYTES = 10 * 1024 * 1024   # 업로드 최대 10MB
+MAX_IMAGE_PIXELS = 25_000_000        # 원본 최대 2500만 픽셀
+MAX_IMAGE_SIDE = 4096               # 정규화 후 긴 변 최대 4096픽셀
+
+
 # 프로젝트 루트
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"

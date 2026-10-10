@@ -2,8 +2,8 @@ from schemas.quiz import Quiz, QuizResponse
 from services.study_service import extract_study_material
 from services.quiz_service import generate_quizzes
 from services.verification_service import verify_quiz_content
-
-
+import logging
+logger = logging.getLogger("uvicorn.error")
 async def run_pipeline(
     ai,
     model,
@@ -37,6 +37,7 @@ async def run_pipeline(
 
     # 3. 독립 정답 검증 → 해설 검증
     # 실패하면 예외가 발생하므로 아래 반환 코드는 실행되지 않습니다.
+    logger.info("정답·해설 검증 시작: 문항 수=%d", len(generated.quizzes))
     verified = await verify_quiz_content(
         ai=ai,
         model=model,
@@ -46,7 +47,7 @@ async def run_pipeline(
         generated=generated,
         quiz_type=quiz_type,
     )
-
+    logger.info("정답·해설 검증 통과: 문항 수=%d", len(verified.quizzes))
     # 4. 검증을 통과한 문제만 Spring에 반환
     # sourceChunkId는 Python 내부용이므로 제외합니다.
     return QuizResponse(

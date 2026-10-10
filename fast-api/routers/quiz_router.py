@@ -13,13 +13,13 @@ from fastapi import (
     UploadFile,
 )
 from starlette.concurrency import run_in_threadpool
-
 from common import MAX_IMAGE_BYTES
+
 from schemas.quiz import Difficulty, QuizResponse, QuizType
 from services.image_service import normalize_image
 from services.pipeline_service import run_pipeline
 
-
+# MAX_IMAGE_BYTES = 10 * 1024 * 1024
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
