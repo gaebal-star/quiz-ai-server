@@ -141,7 +141,7 @@ async def generate_quiz(
     except ValueError as exc:
         response.headers["X-AI-Verification"] = "FAILED"
 
-        logger.warning(
+        logger.exception(
             "AI 검증 실패: %s",
             str(exc),
         )

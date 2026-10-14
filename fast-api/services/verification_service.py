@@ -1,19 +1,22 @@
+import os
 import re
 import unicodedata
 from typing import TypeVar
 
-from google.genai import types
+# from google.genai import types
+# 검증용 groq API 모델
+from groq import AsyncGroq
 from pydantic import BaseModel
 
 from schemas.quiz import GeneratedQuizResponse, QuizType
 from schemas.study import StudyMaterial
 from schemas.verification import (
-    AnswerVerificationResponse,
+    GroqAnswerVerificationResponse,
     ExplanationVerificationResponse,
 )
 from prompts.verification_prompt import (
-    ANSWER_VERIFICATION_SYSTEM_PROMPT,
-    EXPLANATION_VERIFICATION_SYSTEM_PROMPT,
+    GROQ_ANSWER_VERIFICATION_SYSTEM_PROMPT,
+    GROQ_EXPLANATION_VERIFICATION_SYSTEM_PROMPT,
     build_answer_verification_prompt,
     build_explanation_verification_prompt,
 )
@@ -32,40 +35,28 @@ def _normalize_answer(value: str) -> str:
 
 
 async def _request_verification(
-    ai,
-    model: str,
-    data: bytes,
-    mime: str,
     system_prompt: str,
     user_prompt: str,
     response_schema: type[ResponseModel],
 ) -> ResponseModel:
-    """원본 이미지와 검증 요청을 전달하고 응답을 엄격하게 파싱합니다."""
-    result = await ai.models.generate_content(
-        model=model,
-        contents=[
-            types.Part.from_bytes(
-                data=data,
-                mime_type=mime,
-            ),
-            user_prompt,
+    """Groq 텍스트 기반 교차검증. JSON/Pydantic 검증 실패 시 승인하지 않습니다."""
+    key = os.getenv("GROQ_API_KEY")
+    if not key:
+        raise RuntimeError("GROQ_API_KEY 환경변수가 설정되지 않았습니다.")
+    client = AsyncGroq(api_key=key, timeout=90.0, max_retries=1)
+    response = await client.chat.completions.create(
+        model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ],
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            response_mime_type="application/json",
-            response_schema=response_schema,
-        ),
+        response_format={"type": "json_object"},
+        temperature=0,
     )
-
-    if not result.text or not result.text.strip():
-        raise ValueError("AI 검증 응답이 비어 있습니다.")
-
-    # "true" 문자열이나 소수 형태의 인덱스 등을
-    # bool/int로 임의 변환하여 승인하지 않습니다.
-    return response_schema.model_validate_json(
-        result.text,
-        strict=True,
-    )
+    content = response.choices[0].message.content
+    if not content or not content.strip():
+        raise ValueError("Groq 검증 응답이 비어 있습니다.")
+    return response_schema.model_validate_json(content, strict=True)
 
 
 def _index_results(results: list, count: int) -> dict:
@@ -119,17 +110,13 @@ async def verify_answers(
         raise ValueError("검증할 문제가 없습니다.")
 
     response = await _request_verification(
-        ai=ai,
-        model=model,
-        data=data,
-        mime=mime,
-        system_prompt=ANSWER_VERIFICATION_SYSTEM_PROMPT,
+        system_prompt=GROQ_ANSWER_VERIFICATION_SYSTEM_PROMPT,
         user_prompt=build_answer_verification_prompt(
             material,
             generated,
             quiz_type,
         ),
-        response_schema=AnswerVerificationResponse,
+        response_schema=GroqAnswerVerificationResponse,
     )
 
     results = _index_results(
@@ -140,16 +127,6 @@ async def verify_answers(
     for index, quiz in enumerate(generated.quizzes):
         result = results[index]
         label = f"{index + 1}번 문제"
-
-        if not result.imageReadable:
-            raise ValueError(
-                f"{label}: 원본 이미지의 근거를 명확히 읽을 수 없습니다."
-            )
-
-        if not result.chunkFaithfulToImage:
-            raise ValueError(
-                f"{label}: 추출한 청크가 원본 이미지와 일치하지 않습니다."
-            )
 
         if not result.chunkSupportsAnswer:
             raise ValueError(
@@ -223,11 +200,7 @@ async def verify_explanations(
 ) -> None:
     """정답 검증을 통과한 문제의 해설을 검사합니다."""
     response = await _request_verification(
-        ai=ai,
-        model=model,
-        data=data,
-        mime=mime,
-        system_prompt=EXPLANATION_VERIFICATION_SYSTEM_PROMPT,
+        system_prompt=GROQ_EXPLANATION_VERIFICATION_SYSTEM_PROMPT,
         user_prompt=build_explanation_verification_prompt(
             material,
             generated,

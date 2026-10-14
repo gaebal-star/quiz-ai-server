@@ -11,8 +11,7 @@ from google.genai import types
 from routers.quiz_router import router as quiz_router
 
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

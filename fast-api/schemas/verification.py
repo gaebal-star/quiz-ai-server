@@ -42,3 +42,16 @@ class ExplanationVerificationResponse(BaseModel):
         min_length=1,
         max_length=10,
     )
+
+# Groq 텍스트 검증: 이미지 판독 여부는 판단하지 않습니다.
+class GroqAnswerVerification(BaseModel):
+    quizIndex: int = Field(ge=0, strict=True)
+    chunkSupportsAnswer: bool
+    correctOptionIndexes: list[int] = Field(max_length=4)
+    shortAnswer: str = Field(max_length=1000)
+    evidence: str = Field(max_length=3000)
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class GroqAnswerVerificationResponse(BaseModel):
+    results: list[GroqAnswerVerification] = Field(min_length=1, max_length=10)

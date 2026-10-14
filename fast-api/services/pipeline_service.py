@@ -28,15 +28,19 @@ async def run_pipeline(
         mime,
     )
 
-    if not isinstance(material, str) or not material.strip():
+    # 추출한 학습 자료가 없는 경우
+    if not material.chunks:
         raise ValueError(
             "이미지에서 학습 내용을 추출하지 못했습니다."
         )
 
-    logger.info("이미지 학습 자료 추출 완료")
+    logger.info(
+        "이미지 학습 자료 추출 완료: 청크 수=%d",
+        len(material.chunks),
+    )
 
     # 2. AI 문제 생성 + 유사도 0.5 이상 검증
-    # quiz_service.py 내부에서 검증
+    # quiz_service.py 내부에서 유사도 검증 수행
     generated = await generate_quizzes(
         ai,
         model,
@@ -74,7 +78,8 @@ async def run_pipeline(
         len(verified.quizzes),
     )
 
-    # 4. 최종 문제 반환
+    # 4. 검증 완료된 문제만 Spring Boot에 반환
+    # sourceChunkId는 Python 내부에서만 사용
     return QuizResponse(
         quizzes=[
             Quiz.model_validate(
