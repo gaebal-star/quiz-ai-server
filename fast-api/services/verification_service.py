@@ -88,9 +88,9 @@ def _index_results(results: list, count: int) -> dict:
 
 async def verify_answers(
     ai,
-    model: str,
-    data: bytes,
-    mime: str,
+    model,
+    data,
+    mime,
     material: StudyMaterial,
     generated: GeneratedQuizResponse,
     quiz_type: QuizType,
@@ -191,9 +191,9 @@ async def verify_answers(
 
 async def verify_explanations(
     ai,
-    model: str,
-    data: bytes,
-    mime: str,
+    model,
+    data,
+    mime,
     material: StudyMaterial,
     generated: GeneratedQuizResponse,
     quiz_type: QuizType,
