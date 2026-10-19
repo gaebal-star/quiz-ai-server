@@ -1,5 +1,6 @@
 import asyncio
 import hmac
+import json
 import logging
 
 from fastapi import (
@@ -36,7 +37,8 @@ async def generate_quiz(
     request: Request,
     response: Response,
     file: UploadFile = File(...),
-    subject_id: int = Form(..., gt=0),
+    subject_id: int | None = Form(default=None, gt=0),
+    catalog_json: str = Form("[]", max_length=20000),
     quiz_type: QuizType = Form(...),
     quiz_difficulty: Difficulty = Form(...),
     quiz_count: int = Form(..., ge=1, le=10),
@@ -44,6 +46,16 @@ async def generate_quiz(
     x_ai_token: str | None = Header(default=None),
 ):
     settings = request.app.state.settings
+
+    try:
+        catalog = json.loads(catalog_json)
+        if not isinstance(catalog, list):
+            raise ValueError("기존 분류 목록 형식이 올바르지 않습니다.")
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="기존 분류 목록을 읽지 못했습니다.",
+        ) from exc
 
     # AI 서버 인증
     if settings.token:
@@ -110,6 +122,7 @@ async def generate_quiz(
                 difficulty=quiz_difficulty,
                 count=quiz_count,
                 extra=quiz_prompt,
+                catalog=catalog,
             )
 
         # 검증을 모두 통과한 경우

@@ -12,6 +12,7 @@ from services.rag_service import (
 from starlette.concurrency import run_in_threadpool
 from services.quiz_service import generate_quizzes
 from services.verification_service import verify_quiz_content
+from services.taxonomy_service import classify_study_material
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -46,6 +47,7 @@ async def run_pipeline(
     difficulty,
     count,
     extra,
+    catalog,
 ):
     # =====================================================
     # 1. 이미지에서 학습 자료 추출
@@ -67,6 +69,14 @@ async def run_pipeline(
         "이미지 학습 자료 추출 완료: 청크 수=%d",
         len(material.chunks),
     )
+
+    taxonomy = await classify_study_material(
+        ai,
+        model,
+        material,
+        catalog,
+        subject_id,
+    )
     logger.info(
     "추출된 원문 내용: %s",
     material.chunks[0].content[:500],
@@ -84,7 +94,7 @@ async def run_pipeline(
         index.retrieve,
         build_rag_query(
             material,
-            extra,
+            f"{taxonomy.categoryName} {taxonomy.subjectName} {extra}",
             subject_id,
         ),
         configured_top_k(),
@@ -357,6 +367,8 @@ async def run_pipeline(
     # =====================================================
 
     return QuizResponse(
+        categoryName=taxonomy.categoryName,
+        subjectName=taxonomy.subjectName,
         quizzes=[
             Quiz.model_validate(
                 quiz.model_dump(

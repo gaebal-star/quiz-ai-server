@@ -57,7 +57,8 @@ class RagIndex:
 def build_rag_query(material: StudyMaterial, extra: str, subject_id: int) -> str:
     # 사용자 요청이 있다면 우선 반영. 없으면 이미지에서 추출한 주제/핵심어로 검색.
     topics = ' '.join(chunk.topic for chunk in material.chunks[:15])
-    return f'{material.title}\n{extra.strip()}\n{topics}\n과목 ID: {subject_id}'.strip()
+    subject_context = f'과목 ID: {subject_id}' if subject_id else ''
+    return f'{material.title}\n{extra.strip()}\n{topics}\n{subject_context}'.strip()
 
 
 def configured_top_k() -> int:

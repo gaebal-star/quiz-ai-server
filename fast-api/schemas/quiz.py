@@ -18,4 +18,6 @@ class GeneratedQuizResponse(BaseModel):
     quizzes: list[GeneratedQuiz] = Field(min_length=1, max_length=10)
 
 class QuizResponse(BaseModel):
+    categoryName: str = Field(min_length=1, max_length=100)
+    subjectName: str = Field(min_length=1, max_length=100)
     quizzes: list[Quiz] = Field(min_length=1, max_length=10)
