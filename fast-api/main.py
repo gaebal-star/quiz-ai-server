@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from google import genai
 from google.genai import types
+from fastapi.middleware.cors import CORSMiddleware
 
 from routers.quiz_router import router as quiz_router
 
@@ -44,6 +45,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Quiz AI Server",
     lifespan=lifespan,
+)
+
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.0.81:3000",
+        # 팀원들이 사용하는 프론트엔드 주소 추가
+        "http://192.168.0.45:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(quiz_router)
