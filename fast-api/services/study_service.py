@@ -11,7 +11,8 @@ async def extract_study_material(ai, model, data, mime):
         contents=[
             types.Part.from_bytes(data=data, mime_type=mime),
             (   "원본 이미지의 언어를 그대로 유지하세요. "
-                "영어 지문은 영어로 추출하고 한국어로 번역하지 마세요. "
+                "영어, 일본어, 중국어 등 외국어 지문은 해당 원문 언어로 추출하고 한국어로 번역하지 마세요. "
+                "한국어 지문은 한국어로 추출하고, 혼합 언어는 각 문장의 언어를 보존하세요. "
                 "이미지의 학습 내용만 추출하세요. JSON 객체로 답하세요. "
                 "최상위 필드는 title과 chunks입니다. "
                 "각 chunk에는 chunkId(1부터 시작하는 정수), topic, content, "
