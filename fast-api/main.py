@@ -56,6 +56,8 @@ app.add_middleware(
         "http://192.168.0.81:3000",
         # 팀원들이 사용하는 프론트엔드 주소 추가
         "http://192.168.0.20:3000",
+        "http://192.168.0.11:3000",
+
     ],
     allow_credentials=True,
     allow_methods=["*"],

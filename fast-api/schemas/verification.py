@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, field_validator
 
 # 정답을 숨기고 다시 푼 결과
 class AnswerVerification(BaseModel):
@@ -49,8 +49,25 @@ class GroqAnswerVerification(BaseModel):
     chunkSupportsAnswer: bool
     correctOptionIndexes: list[int] = Field(max_length=4)
     shortAnswer: str = Field(max_length=1000)
-    evidence: str = Field(max_length=3000)
+    evidence: str | list[str] = Field(max_length=3000)
     reason: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("evidence", mode="before")
+    @classmethod
+    def normalize_evidence(cls, value: object) -> str:
+        if isinstance(value, str):
+            return value.strip()
+
+        if isinstance(value, list) and all(
+            isinstance(item, str) for item in value
+        ):
+            return "\n".join(
+                item.strip() for item in value if item.strip()
+            )
+
+        raise ValueError(
+            "evidence는 문자열 또는 문자열 배열이어야 합니다."
+        )
 
 
 class GroqAnswerVerificationResponse(BaseModel):

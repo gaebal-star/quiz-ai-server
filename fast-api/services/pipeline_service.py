@@ -18,7 +18,7 @@ from services.taxonomy_service import classify_study_material
 logger = logging.getLogger("uvicorn.error")
 
 # 최초 생성 이후 추가 재생성 최대 횟수
-MAX_REGENERATION_ATTEMPTS = 3
+MAX_REGENERATION_ATTEMPTS = 1
 
 
 def _question_key(question: str) -> str:

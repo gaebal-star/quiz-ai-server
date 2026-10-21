@@ -13,7 +13,7 @@ from services.similarity_service import validate_similarity
 
 logger = logging.getLogger("uvicorn.error")
 
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 1
 
 
 async def generate_quizzes(
