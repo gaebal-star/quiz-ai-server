@@ -11,14 +11,20 @@ async def extract_study_material(ai, model, data, mime):
         contents=[
             types.Part.from_bytes(data=data, mime_type=mime),
             (   "원본 이미지의 언어를 그대로 유지하세요. "
-                "영어, 일본어, 중국어 등 외국어 지문은 해당 원문 언어로 추출하고 한국어로 번역하지 마세요. "
-                "한국어 지문은 한국어로 추출하고, 혼합 언어는 각 문장의 언어를 보존하세요. "
+                "영어 지문은 영어로 추출하고 한국어로 번역하지 마세요. "
+                "sourceLanguage에는 실제 설명 문장의 주된 언어를 적으세요. "
+                "수식, 도형 기호, 변수, 숫자, 단독 전문용어만 보이면 "
+                "sourceLanguage는 UNKNOWN으로 적으세요. "
+                "설명 문장이 분명한 외국어면 해당 언어 이름을 영어로 적으세요. "
                 "이미지의 학습 내용만 추출하세요. JSON 객체로 답하세요. "
-                "최상위 필드는 title과 chunks입니다. "
+                "최상위 필드는 title, sourceLanguage, chunks입니다. "
+                "기하학/수학의 읽을 수 있는 도형 표기, 숫자, 공식, 조건은 "
+                "자연어 설명이 없어도 학습 내용이므로 chunks에 넣으세요. "
                 "각 chunk에는 chunkId(1부터 시작하는 정수), topic, content, "
                 "keyPoints(문자열 배열), evidence(문자열 배열), "
                 "importance(LOW, MEDIUM, HIGH 중 하나)를 넣으세요. "
-                "읽을 수 있는 학습 내용이 없다면 chunks를 빈 배열로 반환하세요."
+                "읽을 수 있는 글자, 도형 표기, 숫자, 공식이 모두 없을 때만 "
+                "chunks를 빈 배열로 반환하세요."
             ),
         ],
         config=types.GenerateContentConfig(

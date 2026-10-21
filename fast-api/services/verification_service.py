@@ -27,7 +27,6 @@ ResponseModel = TypeVar(
     bound=BaseModel,
 )
 
-
 def _normalize_answer(value: str) -> str:
     """
     공백과 유니코드만 정규화합니다.
@@ -44,7 +43,6 @@ async def _request_verification(
 ) -> ResponseModel:
     """
     Groq 텍스트 기반 교차검증.
-
     JSON/Pydantic 검증 실패 시 승인하지 않습니다.
     """
 
@@ -101,43 +99,31 @@ def _index_results(
 ) -> dict:
     """
     문항별 검증 결과의 누락·중복·범위를 확인합니다.
-
     결과 구조 자체가 잘못된 경우에는
     문항별 재생성이 아닌 전체 검증 오류로 처리합니다.
     """
 
     if len(results) != count:
         raise ValueError(
-            "문항 수와 검증 결과 수가 다릅니다."
-        )
+            "문항 수와 검증 결과 수가 다릅니다." )
 
     indexed = {}
 
     for result in results:
         index = result.quizIndex
-
         if index < 0 or index >= count:
-            raise ValueError(
-                "검증 결과의 문항 번호가 잘못되었습니다."
-            )
+            raise ValueError("검증 결과의 문항 번호가 잘못되었습니다.")
 
         if index in indexed:
-            raise ValueError(
-                "검증 결과의 문항 번호가 중복되었습니다."
-            )
+            raise ValueError("검증 결과의 문항 번호가 중복되었습니다.")
 
         if not result.reason.strip():
-            raise ValueError(
-                "검증 판정 이유가 비어 있습니다."
-            )
+            raise ValueError("검증 판정 이유가 비어 있습니다.")
 
         indexed[index] = result
 
     if set(indexed) != set(range(count)):
-        raise ValueError(
-            "검증 결과에서 누락된 문항이 있습니다."
-        )
-
+        raise ValueError("검증 결과에서 누락된 문항이 있습니다.")
     return indexed
 
 
@@ -152,10 +138,7 @@ async def verify_answers(
 ) -> dict[int, str]:
     """
     생성 정답과 해설을 숨긴 채 Groq 독립 풀이를 요청합니다.
-
-    반환값:
-        {실패한 문항 인덱스: 실패 이유}
-
+    반환값: {실패한 문항 인덱스: 실패 이유}
     검증 통과 문항은 반환 딕셔너리에 포함하지 않습니다.
     """
 
@@ -164,119 +147,74 @@ async def verify_answers(
         "OX",
         "SHORT_ANSWER",
     }:
-        raise ValueError(
-            "지원하지 않는 문제 유형입니다."
-        )
+        raise ValueError("지원하지 않는 문제 유형입니다.")
 
     if not generated.quizzes:
-        raise ValueError(
-            "검증할 문제가 없습니다."
-        )
+        raise ValueError("검증할 문제가 없습니다.")
 
     response = await _request_verification(
-        system_prompt=(
-            GROQ_ANSWER_VERIFICATION_SYSTEM_PROMPT
-        ),
+        system_prompt=(GROQ_ANSWER_VERIFICATION_SYSTEM_PROMPT),
         user_prompt=build_answer_verification_prompt(
             material,
             generated,
             quiz_type,
-        ),
+            ),
         response_schema=GroqAnswerVerificationResponse,
     )
 
-    results = _index_results(
-        response.results,
-        len(generated.quizzes),
-    )
+    results = _index_results(response.results, len(generated.quizzes),)
 
     failures: dict[int, str] = {}
 
     for index, quiz in enumerate(generated.quizzes):
         result = results[index]
         label = f"{index + 1}번 문제"
-
         reason = None
 
         if not result.chunkSupportsAnswer:
-            reason = (
-                "연결된 청크의 정답 근거가 부족합니다."
-            )
+            reason = ( "연결된 청크의 정답 근거가 부족합니다.")
 
         elif not result.evidence.strip():
-            reason = (
-                "검증 근거가 비어 있습니다."
-            )
-
+            reason = ("검증 근거가 비어 있습니다.")
         elif quiz_type == "SHORT_ANSWER":
-
             if result.correctOptionIndexes:
-                reason = (
-                    "단답형 검증 결과에 보기 번호가 있습니다."
-                )
-
+                reason = ( "단답형 검증 결과에 보기 번호가 있습니다.")
             else:
-                verified_answer = _normalize_answer(
-                    result.shortAnswer
-                )
-
-                generated_answer = _normalize_answer(
-                    quiz.quizCorrectAnswer
-                )
+                verified_answer = _normalize_answer( result.shortAnswer)
+                generated_answer = _normalize_answer(quiz.quizCorrectAnswer)
 
                 if not verified_answer:
-                    reason = (
-                        "단답형 정답을 확정하지 못했습니다."
-                    )
+                    reason = ("단답형 정답을 확정하지 못했습니다.")
 
                 elif verified_answer != generated_answer:
-                    reason = (
-                        "생성 정답과 독립 풀이 정답이 다릅니다."
-                    )
+                    reason = ("생성 정답과 독립 풀이 정답이 다릅니다.")
 
         else:
             # 객관식 및 OX 검증
-
             if result.shortAnswer.strip():
-                reason = (
-                    "객관식/OX 검증 형식이 잘못되었습니다."
-                )
+                reason = ("객관식/OX 검증 형식이 잘못되었습니다.")
 
             else:
                 indexes = result.correctOptionIndexes
-
                 if len(indexes) != 1:
-                    reason = (
-                        "정답을 하나로 확정하지 못했습니다."
-                    )
+                    reason = ("정답을 하나로 확정하지 못했습니다.")
 
                 else:
                     answer_index = indexes[0]
-
                     if not (
                         0 <= answer_index <
                         len(quiz.quizSelections)
                     ):
-                        reason = (
-                            "정답 보기 번호가 범위를 벗어났습니다."
-                        )
+                        reason = ("정답 보기 번호가 범위를 벗어났습니다.")
 
                     else:
-                        verified_answer = (
-                            quiz.quizSelections[answer_index]
-                        )
+                        verified_answer = (quiz.quizSelections[answer_index])
 
-                        if (
-                            verified_answer
-                            != quiz.quizCorrectAnswer
-                        ):
-                            reason = (
-                                "생성 정답과 독립 풀이 정답이 다릅니다."
-                            )
+                        if (verified_answer!= quiz.quizCorrectAnswer):
+                            reason = ("생성 정답과 독립 풀이 정답이 다릅니다.")
 
         if reason is not None:
             failures[index] = reason
-
             logger.warning(
                 "AI 정답 검증 실패: %s - %s",
                 label,
@@ -303,15 +241,12 @@ async def verify_explanations(
 ) -> dict[int, str]:
     """
     정답 검증을 통과한 문제의 해설을 검사합니다.
-
     반환값:
         {실패한 문항 인덱스: 실패 이유}
     """
 
     if not generated.quizzes:
-        raise ValueError(
-            "해설을 검증할 문제가 없습니다."
-        )
+        raise ValueError("해설을 검증할 문제가 없습니다.")
 
     response = await _request_verification(
         system_prompt=(
@@ -335,30 +270,21 @@ async def verify_explanations(
     for index in range(len(generated.quizzes)):
         result = results[index]
         label = f"{index + 1}번 문제"
-
         reason = None
 
         if not result.explanationSupported:
-            reason = (
-                "해설의 근거나 사실·계산을 "
-                "확인하지 못했습니다."
-            )
+            reason = ("해설의 근거나 사실·계산을 ""확인하지 못했습니다.")
 
         elif not result.explanationConsistentWithAnswer:
-            reason = (
-                "해설이 문제 조건 또는 정답과 "
-                "일치하지 않습니다."
-            )
+            reason = ("해설이 문제 조건 또는 정답과 ""일치하지 않습니다.")
 
         if reason is not None:
             failures[index] = reason
-
             logger.warning(
                 "AI 해설 검증 실패: %s - %s",
                 label,
                 reason,
             )
-
         else:
             logger.info(
                 "AI 해설 검증 통과: %s",
@@ -366,7 +292,6 @@ async def verify_explanations(
             )
 
     return failures
-
 
 async def verify_quiz_content(
     ai,
@@ -379,7 +304,6 @@ async def verify_quiz_content(
 ):
     """
     Groq 독립 AI 정답·해설 교차검증.
-
     반환:
     {
         "passed_indexes": [...],
@@ -393,9 +317,7 @@ async def verify_quiz_content(
     count = len(generated.quizzes)
 
     if count == 0:
-        raise ValueError(
-            "검증할 문제가 없습니다."
-        )
+        raise ValueError("검증할 문제가 없습니다.")
 
     logger.info(
         "Groq AI 검증 시작: 문항 수=%d, 유형=%s",

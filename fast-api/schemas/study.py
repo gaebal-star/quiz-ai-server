@@ -14,4 +14,5 @@ class StudyChunk(BaseModel):
 
 class StudyMaterial(BaseModel):
     title: str = Field(max_length=300)
-    chunks: list[StudyChunk] = Field(min_length=1, max_length=30)
+    chunks: list[StudyChunk] = Field(max_length=30)
+    sourceLanguage: str = Field(default="UNKNOWN", max_length=40)

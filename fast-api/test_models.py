@@ -9,7 +9,7 @@ print("테스트 모델:", TEST_MODEL)
 try:
     response = client.models.generate_content(
         model=TEST_MODEL,
-        contents="테스트입니다. 연결 성공이라고 짧게 답해주세요.",
+        contents="테스트입니다.",
     )
 
     print("===== Gemini 응답 =====")

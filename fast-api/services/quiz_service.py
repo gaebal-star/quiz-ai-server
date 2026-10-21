@@ -25,6 +25,7 @@ async def generate_quizzes(
     difficulty,
     count,
     extra,
+    output_language,
 ):
     feedback = ""
 
@@ -45,6 +46,7 @@ async def generate_quizzes(
                 difficulty,
                 count,
                 extra,
+                output_language,
                 feedback,
             ),
             config=types.GenerateContentConfig(
@@ -73,6 +75,7 @@ async def generate_quizzes(
                 quiz_type,
                 count,
                 material,
+                output_language,
             )
 
             # 2. 원본 이미지 내용과 유사도 검증

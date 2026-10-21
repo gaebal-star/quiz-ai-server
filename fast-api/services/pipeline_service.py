@@ -4,6 +4,7 @@ import unicodedata
 
 from schemas.quiz import Quiz, QuizResponse
 from services.study_service import extract_study_material
+from services.language_service import detect_output_language
 from services.rag_service import (
     RagIndex,
     build_rag_query,
@@ -68,6 +69,13 @@ async def run_pipeline(
     logger.info(
         "이미지 학습 자료 추출 완료: 청크 수=%d",
         len(material.chunks),
+    )
+
+    output_language = detect_output_language(material)
+    logger.info(
+        "원문 언어 판별: %s, 문제 출력 언어 선택: %s",
+        material.sourceLanguage,
+        output_language,
     )
 
     taxonomy = await classify_study_material(
@@ -171,6 +179,7 @@ async def run_pipeline(
             difficulty,
             pending_count,
             extra,
+            output_language,
         )
 
         if len(generated.quizzes) != pending_count:

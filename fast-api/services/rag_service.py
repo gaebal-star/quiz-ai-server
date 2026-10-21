@@ -51,6 +51,7 @@ class RagIndex:
         logger.info('RAG 검색 완료: 전체=%d, 선택=%d, 최고 유사도=%.4f',
                     len(scores), len(selected), float(scores[ranked[0]]))
         return StudyMaterial(title=self.material.title,
+                             sourceLanguage=self.material.sourceLanguage,
                              chunks=[self.material.chunks[i] for i in selected])
 
 

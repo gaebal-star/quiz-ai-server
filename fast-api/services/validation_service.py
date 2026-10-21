@@ -22,7 +22,7 @@ def normalize_study_material(material):
             raise ValueError('자료 내용 또는 출처 근거가 비어 있습니다.')
     return material
 
-def validate_quizzes(response, quiz_type, count, material):
+def validate_quizzes(response, quiz_type, count, material, output_language=""):
     if len(response.quizzes) != count:
         raise ValueError(f'문항 수는 정확히 {count}개여야 합니다.')
     ids = {c.chunkId for c in material.chunks}
@@ -33,6 +33,16 @@ def validate_quizzes(response, quiz_type, count, material):
             if not value:
                 raise ValueError('문제/정답/해설이 비어 있습니다.')
             setattr(quiz, name, value)
+
+        if (
+            output_language.casefold() in {'korean', '한국어'}
+            and not re.search(r'[가-힣]{2}', quiz.quizQuestion)
+        ):
+            raise ValueError(
+                '문제 출력 언어가 한국어로 지정됐지만 '
+                '문제 문장에 한국어가 없습니다. 한국어로 다시 생성하세요.'
+            )
+
         quiz.quizSelections = [normalize_text(x) for x in quiz.quizSelections]
         if quiz.sourceChunkId not in ids:
             raise ValueError('정답 근거 청크 ID가 존재하지 않습니다.')
