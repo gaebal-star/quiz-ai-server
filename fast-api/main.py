@@ -18,10 +18,16 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 async def lifespan(app: FastAPI):
     key = os.getenv("GOOGLE_API_KEY")
     model = os.getenv("GEMINI_MODEL")
+    token = os.getenv("QUIZ_AI_TOKEN", "").strip()
 
     if not key or not model:
         raise RuntimeError(
             "GOOGLE_API_KEY와 GEMINI_MODEL 환경변수를 설정해주세요."
+        )
+
+    if not token:
+        raise RuntimeError(
+            "QUIZ_AI_TOKEN 환경변수를 설정해주세요."
         )
 
     client = genai.Client(
@@ -32,7 +38,7 @@ async def lifespan(app: FastAPI):
     app.state.ai = client.aio
     app.state.settings = SimpleNamespace(
         model=model,
-        token=os.getenv("QUIZ_AI_TOKEN", ""),
+        token=token,
     )
 
     try:

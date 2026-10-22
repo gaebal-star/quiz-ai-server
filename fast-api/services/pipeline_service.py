@@ -85,10 +85,6 @@ async def run_pipeline(
         catalog,
         subject_id,
     )
-    logger.info(
-    "추출된 원문 내용: %s",
-    material.chunks[0].content[:500],
-    )
     # =====================================================
     # 2. 이미지 청크 임베딩 및 RAG 검색
     # =====================================================
@@ -260,8 +256,8 @@ async def run_pipeline(
                 or question_key in batch_question_keys
             ):
                 logger.warning(
-                    "중복 문제 제외: %s",
-                    quiz.quizQuestion,
+                    "중복 문제 제외: 생성 인덱스=%d",
+                    local_index,
                 )
                 continue
 

@@ -53,6 +53,31 @@ def detect_output_language(material) -> str:
     classify a source as English. If the source language remains ambiguous,
     Korean is the default.
     """
+    declared_language = (material.sourceLanguage or "UNKNOWN").strip().casefold()
+    language_aliases = {
+        "korean": "Korean",
+        "한국어": "Korean",
+        "english": "English",
+        "영어": "English",
+        "japanese": "Japanese",
+        "日本語": "Japanese",
+        "일본어": "Japanese",
+        "chinese": "Chinese",
+        "中文": "Chinese",
+        "중국어": "Chinese",
+        "french": "French",
+        "german": "German",
+        "spanish": "Spanish",
+        "italian": "Italian",
+        "portuguese": "Portuguese",
+        "unknown": "Korean",
+    }
+    if declared_language in language_aliases:
+        return language_aliases[declared_language]
+    if declared_language and declared_language not in {"unknown", "mixed", "undetermined"}:
+        # Keep another clearly declared source language (for example Russian).
+        return material.sourceLanguage.strip().title()
+
     fields = [material.title]
     for chunk in material.chunks:
         fields.extend((chunk.topic, chunk.content))
@@ -77,7 +102,7 @@ def detect_output_language(material) -> str:
             for language, markers in _LATIN_MARKERS.items()
         }
         foreign_score = max(scores.values(), default=0)
-        if foreign_score < 3 or hangul_count >= len("".join(latin_tokens)) * 0.35:
+        if foreign_score < 4 or hangul_count >= len("".join(latin_tokens)) * 0.35:
             return "Korean"
 
     if han_count >= 4 and kana_count == 0 and hangul_count == 0:
@@ -94,7 +119,7 @@ def detect_output_language(material) -> str:
     }
     ranked = sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
-    if ranked and ranked[0][1] >= 2:
+    if ranked and ranked[0][1] >= 4:
         second_score = ranked[1][1] if len(ranked) > 1 else 0
         if ranked[0][1] > second_score:
             return ranked[0][0]

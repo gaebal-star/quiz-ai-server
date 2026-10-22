@@ -57,18 +57,23 @@ async def generate_quiz(
             detail="기존 분류 목록을 읽지 못했습니다.",
         ) from exc
 
-    # AI 서버 인증
-    if settings.token:
-        received_token = (x_ai_token or "").encode()
-        expected_token = settings.token.encode()
+    # 설정 누락 시에도 인증을 우회하지 않도록 fail-closed 처리
+    if not settings.token:
+        raise HTTPException(
+            status_code=503,
+            detail="AI 서버 인증 토큰이 설정되지 않았습니다.",
+        )
 
-        if not hmac.compare_digest(expected_token, received_token):
-            response.headers["X-AI-Verification"] = "AUTH_FAILED"
+    received_token = (x_ai_token or "").encode()
+    expected_token = settings.token.encode()
 
-            raise HTTPException(
-                status_code=401,
-                detail="AI 서버 인증에 실패했습니다.",
-            )
+    if not hmac.compare_digest(expected_token, received_token):
+        response.headers["X-AI-Verification"] = "AUTH_FAILED"
+
+        raise HTTPException(
+            status_code=401,
+            detail="AI 서버 인증에 실패했습니다.",
+        )
 
     # 업로드 파일 읽기
     try:
